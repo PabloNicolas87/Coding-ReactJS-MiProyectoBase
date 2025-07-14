@@ -1,9 +1,10 @@
-name: CI - Build Docker Image
+name: CI/CD – Build & Publish Docker Image
 
 on:
   push:
-    branches:
-      - main
+    branches: [ main ]
+    tags:
+      - 'v*'
 
 jobs:
   build:
@@ -12,6 +13,8 @@ jobs:
     steps:
       - name: 📥 Checkout repo
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
 
       - name: 🛠️ Set up Node.js
         uses: actions/setup-node@v3
@@ -19,7 +22,7 @@ jobs:
           node-version: 20
 
       - name: 📦 Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: ⚙️ Build project
         run: npm run build
@@ -36,12 +39,22 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: 🏷️ Tag image
-        run: docker tag miproyecto-base pablonicolas87/proyectobase-react-typescript-vite:latest
+      - name: 🔖 Determine version tag
+        run: |
+          if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
+            echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+          else
+            echo "VERSION=latest" >> $GITHUB_ENV
+          fi
 
-      - name: 📤 Push image to Docker Hub
-        run: docker push pablonicolas87/proyectobase-react-typescript-vite:latest
+      - name: 🏷️ Tag & Push images
+        run: |
+          docker tag miproyecto-base pablonicolas87/proyectobase-react-typescript-vite:${{ env.VERSION }}
+          docker push pablonicolas87/proyectobase-react-typescript-vite:${{ env.VERSION }}
+          if [[ "${{ env.VERSION }}" != "latest" ]]; then
+            docker tag miproyecto-base pablonicolas87/proyectobase-react-typescript-vite:latest
+            docker push pablonicolas87/proyectobase-react-typescript-vite:latest
+          fi
 
       - name: 🧹 Clean up dangling images
         run: docker image prune -f
-
