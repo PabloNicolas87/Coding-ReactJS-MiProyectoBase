@@ -1,9 +1,17 @@
+name: CI/CD - Build & Publish Docker Images
+
+on:
+  push:
+    branches:
+      - main
+
 name: CI/CD – Build & Publish Docker Images
 name: CI/CD – Build & Publish Docker Image
 
 on:
   push:
     branches: [ main ]
+
     tags:
       - 'v*'
 
@@ -31,7 +39,7 @@ jobs:
       - name: 🛠️ Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: 20
+          node-version: '20'
 
       - name: 📦 Install dependencies
         run: npm ci

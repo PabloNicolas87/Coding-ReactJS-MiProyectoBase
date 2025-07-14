@@ -121,17 +121,7 @@ Para iniciar un nuevo proyecto (e‑commerce, gestión de alumnos, etc.) sin mod
 
 5. **Opción adicional – Reutilizar la imagen Docker**: si prefieres no clonar el repositorio, puedes aprovechar directamente la imagen base publicada en Docker Hub. Crea un nuevo proyecto y define un `Dockerfile` que extienda la imagen pública, por ejemplo:
 
-```Dockerfile
-FROM pablonicolas87/proyectobase-react-typescript-vite:latest AS base
-WORKDIR /app
-COPY . .
-RUN npm run build
 
-FROM nginx:stable-alpine
-COPY --from=base /app/dist /usr/share/nginx/html
-EXPOSE 80
-CMD ["nginx", "-g", "daemon off;"]
-```
 
 De este modo arrancas tu aplicación con todas las dependencias y configuración preinstalladas sin tocar el proyecto base.
 
