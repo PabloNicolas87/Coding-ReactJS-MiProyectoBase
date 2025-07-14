@@ -4,6 +4,14 @@ on:
   push:
     branches:
       - main
+
+name: CI/CD – Build & Publish Docker Images
+name: CI/CD – Build & Publish Docker Image
+
+on:
+  push:
+    branches: [ main ]
+
     tags:
       - 'v*'
 
@@ -55,6 +63,26 @@ jobs:
             -t pablonicolas87/proyectobase-builder:latest .
           docker push pablonicolas87/proyectobase-builder:${{ env.VERSION }}
           docker push pablonicolas87/proyectobase-builder:latest
+          
+      - name: 🔖 Determine version tag
+        run: |
+          if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
+            echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+          else
+            echo "VERSION=latest" >> $GITHUB_ENV
+          fi
+
+      - name: 🏷️ Tag & Push images
+        run: |
+          docker tag miproyecto-base pablonicolas87/proyectobase-react-typescript-vite:${{ env.VERSION }}
+          docker push pablonicolas87/proyectobase-react-typescript-vite:${{ env.VERSION }}
+          if [[ "${{ env.VERSION }}" != "latest" ]]; then
+            docker tag miproyecto-base pablonicolas87/proyectobase-react-typescript-vite:latest
+            docker push pablonicolas87/proyectobase-react-typescript-vite:latest
+          fi
+
+      - name: 🏷️ Tag image
+        run: docker tag miproyecto-base pablonicolas87/proyectobase-react-typescript-vite:latest
 
       - name: ⚙️ Build & Push RUNTIME image
         run: |
