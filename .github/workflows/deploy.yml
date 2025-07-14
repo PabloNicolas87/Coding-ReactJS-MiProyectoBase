@@ -4,6 +4,19 @@ on:
   push:
     branches:
       - main
+
+on:
+  push:
+    branches:
+      - main
+
+name: CI/CD – Build & Publish Docker Images
+name: CI/CD – Build & Publish Docker Image
+
+on:
+  push:
+    branches: [ main ]
+
     tags:
       - 'v*'
 
