@@ -5,6 +5,12 @@ on:
     branches:
       - main
 
+
+on:
+  push:
+    branches:
+      - main
+
 on:
   push:
     branches:
@@ -79,3 +85,4 @@ jobs:
 
       - name: 🧹 Clean up dangling images
         run: docker image prune -f
+
