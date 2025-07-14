@@ -121,7 +121,7 @@ Para iniciar un nuevo proyecto (e‑commerce, gestión de alumnos, etc.) sin mod
 
 5. **Opción adicional – Reutilizar la imagen Docker**: si prefieres no clonar el repositorio, puedes aprovechar directamente la imagen base publicada en Docker Hub. Crea un nuevo proyecto y define un `Dockerfile` que extienda la imagen pública, por ejemplo:
 
-
+(aca iria algo nuevo)
 
 De este modo arrancas tu aplicación con todas las dependencias y configuración preinstalladas sin tocar el proyecto base.
 
