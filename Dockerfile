@@ -7,17 +7,15 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm install
 
-# Copiamos el resto del código
+# Copiamos el resto del código y generamos el build
 COPY . .
-
-# Ejecutamos el build de producción
 RUN npm run build
 
+# — Copiamos TODO el proyecto base como plantilla “base” —
+RUN mkdir -p /usr/src/base
+RUN cp -R /app/. /usr/src/base/
 
-# Copia tu carpeta template (vacía o con placeholders)
-COPY template/ /usr/src/template/
-
-# Añade un script de scaffolding
+# Añade el script de scaffolding para proyectos nuevos
 COPY scripts/init-project.sh /usr/local/bin/init-project.sh
 RUN chmod +x /usr/local/bin/init-project.sh
 
