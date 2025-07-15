@@ -13,6 +13,14 @@ COPY . .
 # Ejecutamos el build de producción
 RUN npm run build
 
+
+# Copia tu carpeta template (vacía o con placeholders)
+COPY template/ /usr/src/template/
+
+# Añade un script de scaffolding
+COPY scripts/init-project.sh /usr/local/bin/init-project.sh
+RUN chmod +x /usr/local/bin/init-project.sh
+
 # —————— Etapa 2: Servir el build con NGINX ——————
 FROM nginx:stable-alpine AS production
 
