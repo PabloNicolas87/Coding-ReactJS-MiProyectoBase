@@ -25,10 +25,15 @@ mkdir -p "$TARGET_DIR"
 # 2) Copiar TODO el proyecto base
 cp -R /usr/src/base/. "$TARGET_DIR"
 
+# 2b) Limpiar carpetas que no queremos en el scaffold
+rm -rf "$TARGET_DIR/dist"
+rm -rf "$TARGET_DIR/node_modules"
+
 # 3) Reemplazar placeholders en todos los ficheros relevantes
 find "$TARGET_DIR" -type f \
   \( \
     -name "*.json" -o \
+    -name "package-lock.json" -o \
     -name "*.yml"  -o \
     -name "*.md"   -o \
     -name ".gitignore" -o \
