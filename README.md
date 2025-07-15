@@ -167,13 +167,6 @@ Si prefieres no clonar el repositorio como template, sigue estos **5 pasos** par
    CMD ["nginx", "-g", "daemon off;"]
    ```
 
-   Y luego en consola:
-
-   ```bash
-   docker build -t tu-usuario/proyecto-nuevo .
-   docker run --rm -p 3000:80 tu-usuario/proyecto-nuevo
-   ```
-
 Con cualquiera de las dos opciones tendrás tu **proyecto-nuevo** listo para desarrollar con toda la configuración de tu Proyecto Base.
 
 ## 🤝 Contribuir
