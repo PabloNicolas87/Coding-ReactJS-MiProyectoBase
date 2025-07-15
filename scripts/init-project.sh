@@ -27,6 +27,10 @@ cp -R /usr/src/base/. "$TARGET_DIR"
 rm -rf "$TARGET_DIR/dist"
 rm -rf "$TARGET_DIR/node_modules"
 
+# 2b) Limpiar carpetas que no queremos en el scaffold
+rm -rf "$TARGET_DIR/dist"
+rm -rf "$TARGET_DIR/node_modules"
+
 # 2c) Reescribir name y version en package.json, eliminar lock viejo
 #    y así no arrastrar los valores del proyecto base
 sed -i -E "s/\"name\": *\"[^\"]+\"/\"name\": \"$PROJECT_NAME\"/" "$TARGET_DIR/package.json"
@@ -36,6 +40,8 @@ rm -f "$TARGET_DIR/package-lock.json"
 # 3) Reemplazar placeholders en resto de ficheros relevantes
 find "$TARGET_DIR" -type f \
   \( \
+    -name "*.json" -o \
+    -name "package-lock.json" -o \
     -name "*.yml"  -o \
     -name "*.md"   -o \
     -name ".gitignore" -o \
