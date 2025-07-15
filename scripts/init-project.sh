@@ -22,12 +22,18 @@ echo
 # 1) Crear carpeta destino
 mkdir -p "$TARGET_DIR"
 
-# 2) Copiar template completo
-cp -R /usr/src/template/. "$TARGET_DIR"
+# 2) Copiar TODO el proyecto base
+cp -R /usr/src/base/. "$TARGET_DIR"
 
 # 3) Reemplazar placeholders en todos los ficheros relevantes
-#    Buscaremos archivos de texto (.json, .yml, .md, .gitignore, etc.)
-find "$TARGET_DIR" -type f \( -name "*.json" -o -name "*.yml" -o -name "*.md" -o -name ".gitignore" \) \
+find "$TARGET_DIR" -type f \
+  \( \
+    -name "*.json" -o \
+    -name "*.yml"  -o \
+    -name "*.md"   -o \
+    -name ".gitignore" -o \
+    -name "Dockerfile" \
+  \) \
   -exec sed -i \
     -e "s/__PROJECT_NAME__/$PROJECT_NAME/g" \
     -e "s/__VERSION__/$VERSION/g" \
