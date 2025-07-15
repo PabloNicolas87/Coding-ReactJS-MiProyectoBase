@@ -11,9 +11,7 @@ if [ -z "$PROJECT_NAME" ] || [ -z "$VERSION" ]; then
   exit 1
 fi
 
-# Directorio destino (en el host, montado en /output)
 TARGET_DIR="/output/$PROJECT_NAME"
-
 echo "📦 Creando proyecto: $PROJECT_NAME"
 echo "🔖 Versión: $VERSION"
 echo "🐳 Docker user: $DOCKER_USER"
@@ -29,19 +27,21 @@ cp -R /usr/src/base/. "$TARGET_DIR"
 rm -rf "$TARGET_DIR/dist"
 rm -rf "$TARGET_DIR/node_modules"
 
-# 3) Reemplazar placeholders en todos los ficheros relevantes
+# 2c) Reescribir name y version en package.json, eliminar lock viejo
+#    y así no arrastrar los valores del proyecto base
+sed -i -E "s/\"name\": *\"[^\"]+\"/\"name\": \"$PROJECT_NAME\"/" "$TARGET_DIR/package.json"
+sed -i -E "s/\"version\": *\"[^\"]+\"/\"version\": \"$VERSION\"/"    "$TARGET_DIR/package.json"
+rm -f "$TARGET_DIR/package-lock.json"
+
+# 3) Reemplazar placeholders en resto de ficheros relevantes
 find "$TARGET_DIR" -type f \
   \( \
-    -name "*.json" -o \
-    -name "package-lock.json" -o \
     -name "*.yml"  -o \
     -name "*.md"   -o \
     -name ".gitignore" -o \
     -name "Dockerfile" \
   \) \
   -exec sed -i \
-    -e "s/__PROJECT_NAME__/$PROJECT_NAME/g" \
-    -e "s/__VERSION__/$VERSION/g" \
     -e "s/__DOCKER_USER__/$DOCKER_USER/g" {} \;
 
 # 4) Inicializar git (opcional)
