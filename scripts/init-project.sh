@@ -11,6 +11,7 @@ if [ -z "$PROJECT_NAME" ] || [ -z "$VERSION" ]; then
   exit 1
 fi
 
+# Directorio destino (en el host, montado en /output)
 TARGET_DIR="/output/$PROJECT_NAME"
 
 echo "📦 Creando proyecto: $PROJECT_NAME"
