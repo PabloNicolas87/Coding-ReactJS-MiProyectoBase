@@ -106,24 +106,75 @@ Este repositorio contiene un **proyecto base** para aplicaciones Front‑End mod
 
 ## 📦 Uso como plantilla
 
-Para iniciar un nuevo proyecto (e‑commerce, gestión de alumnos, etc.) sin modificar este repo:
+Para iniciar un nuevo proyecto (e‑commerce, gestión de alumnos, etc.) sin modificar este repo, tienes **dos opciones**:
+
+### Opción A: Template de GitHub
 
 1. Marca este repo como **template** en GitHub (`Settings → Template repository`).
-
 2. En GitHub haz clic en **Use this template** y crea un nuevo repositorio.
-
 3. Clona tu nuevo repo y actualiza:
 
-   * `package.json` (nombre y dependencias extras)
-   * `.github/workflows/deploy.yml` (nombre de imagen y repo de Docker Hub)
+   ```bash
+   git clone git@github.com:tu-usuario/proyecto-nuevo.git
+   cd proyecto-nuevo
+   ```
+4. Ajusta en `package.json`, `vite.config.ts` y `.github/workflows/deploy.yml` los nombres de proyecto e imagen Docker (`tu-usuario/proyecto-nuevo`).
+5. Empieza a desarrollar: conserva tu pipeline y Dockerfile listos.
 
-4. Empieza a desarrollar sobre tu nuevo proyecto, conservando tu pipeline y Dockerfile listos.
+### Opción B: Reutilizar la imagen Docker
 
-5. **Opción adicional – Reutilizar la imagen Docker**: si prefieres no clonar el repositorio, puedes aprovechar directamente la imagen base publicada en Docker Hub. Crea un nuevo proyecto y define un `Dockerfile` que extienda la imagen pública, por ejemplo:
+Si prefieres no clonar el repositorio como template, sigue estos **5 pasos** para arrancar con la imagen builder y crear “proyecto-nuevo” desde cero:
 
-(aca iria algo nuevo)
+1. **Obtener la imagen builder**
 
-De este modo arrancas tu aplicación con todas las dependencias y configuración preinstalladas sin tocar el proyecto base.
+   ```bash
+   docker pull tu-usuario/proyecto-base:builder
+   ```
+2. **Generar el scaffolding dentro de un contenedor**
+
+   ```bash
+   docker run --rm -v "$(pwd)/proyecto-nuevo":/output \
+     tu-usuario/proyecto-base:builder \
+     /bin/sh -c "cd /app && npm init proyecto-base -- --dest /output"
+   ```
+3. **Inicializar tu propio repositorio**
+
+   ```bash
+   cd proyecto-nuevo
+   git init
+   git remote add origin git@github.com:tu-usuario/proyecto-nuevo.git
+   git add .
+   git commit -m "Kickoff proyecto-nuevo desde proyecto-base"
+   git push -u origin main
+   ```
+4. **Adaptar CI/CD y GitHub Actions**
+
+   * Copia o ajusta `.github/workflows/deploy.yml`, cambiando etiquetas y rutas al nuevo repo e imagen.
+   * Configura los **secrets** (`DOCKERHUB_USER`, `DOCKERHUB_TOKEN`) en el repo de proyecto-nuevo.
+5. **Configurar despliegue de imágenes Docker**
+
+   ```dockerfile
+   # Etapa 1: Builder usando la imagen pública de proyecto-base
+   FROM tu-usuario/proyecto-base:builder AS builder
+   WORKDIR /app
+   COPY . .
+   RUN npm install && npm run build
+
+   # Etapa 2: Runtime con Nginx
+   FROM nginx:stable-alpine AS runtime
+   COPY --from=builder /app/dist /usr/share/nginx/html
+   EXPOSE 80
+   CMD ["nginx", "-g", "daemon off;"]
+   ```
+
+   Y luego en consola:
+
+   ```bash
+   docker build -t tu-usuario/proyecto-nuevo .
+   docker run --rm -p 3000:80 tu-usuario/proyecto-nuevo
+   ```
+
+Con cualquiera de las dos opciones tendrás tu **proyecto-nuevo** listo para desarrollar con toda la configuración de tu Proyecto Base.
 
 ## 🤝 Contribuir
 
