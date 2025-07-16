@@ -4,7 +4,7 @@ set -e
 # Parámetros
 PROJECT_NAME="$1"
 VERSION="$2"
-DOCKER_USER="${3:-pablonicolas87}"   # tu usuario Docker por defecto
+DOCKER_USER="${3:-pablonicolas87}"
 
 if [ -z "$PROJECT_NAME" ] || [ -z "$VERSION" ]; then
   echo "Uso: init-project.sh <project-name> <version> [docker-user]"
@@ -24,15 +24,20 @@ mkdir -p "$TARGET_DIR"
 # 2) Copiar TODO el proyecto base
 cp -R /usr/src/base/. "$TARGET_DIR"
 
+# 2a) Quitar cualquier repo Git heredado
+rm -rf "$TARGET_DIR/.git"
+
 # 2b) Limpiar carpetas que no queremos en el scaffold
 rm -rf "$TARGET_DIR/dist"
 rm -rf "$TARGET_DIR/node_modules"
-rm -rf "$TARGET_DIR/scripts"
 
 # 2c) Reescribir name y version en package.json, eliminar lock viejo
 sed -i -E "s/\"name\": *\"[^\"]+\"/\"name\": \"$PROJECT_NAME\"/" "$TARGET_DIR/package.json"
 sed -i -E "s/\"version\": *\"[^\"]+\"/\"version\": \"$VERSION\"/"    "$TARGET_DIR/package.json"
 rm -f "$TARGET_DIR/package-lock.json"
+
+# 2d) Eliminar carpeta de scripts
+rm -rf "$TARGET_DIR/scripts"
 
 # 3) Reemplazar placeholders en resto de ficheros relevantes
 find "$TARGET_DIR" -type f \
@@ -50,7 +55,7 @@ echo "🔧 Inicializando repositorio Git en $TARGET_DIR"
 cd "$TARGET_DIR"
 git init
 
-# 4b) Configurar identidad Git (usa vars de entorno o tus datos)
+# Configurar identidad Git
 GIT_NAME="${GIT_USER_NAME:-PabloNicolas87}"
 GIT_EMAIL="${GIT_USER_EMAIL:-gironepablo@gmail.com}"
 echo "✏️  Configurando Git user.name=$GIT_NAME user.email=$GIT_EMAIL"
