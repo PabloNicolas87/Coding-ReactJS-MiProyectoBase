@@ -1,11 +1,12 @@
 # —————— Etapa 1: Build del proyecto ——————
 FROM node:20-alpine AS builder
 
-# Instalar Git, SSH y GitHub CLI
+# Instala Git, SSH, curl y GnuPG (que provee gpg), luego GitHub CLI
 RUN apk update && apk add --no-cache \
     git \
     openssh-client \
     curl \
+    gnupg \
   && curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
      | gpg --dearmor -o /usr/share/keyrings/githubcli-archive-keyring.gpg \
   && echo "https://cli.github.com/packages alpine main" \
