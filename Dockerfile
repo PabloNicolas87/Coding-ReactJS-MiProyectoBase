@@ -1,6 +1,17 @@
 # —————— Etapa 1: Build del proyecto ——————
 FROM node:20-alpine AS builder
 
+# Instalar Git, SSH y GitHub CLI
+RUN apk update && apk add --no-cache \
+    git \
+    openssh-client \
+    curl \
+  && curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
+     | gpg --dearmor -o /usr/share/keyrings/githubcli-archive-keyring.gpg \
+  && echo "https://cli.github.com/packages alpine main" \
+     | tee /etc/apk/repositories \
+  && apk add --no-cache gh
+
 WORKDIR /app
 
 # Copiamos solo lo necesario para instalar deps
