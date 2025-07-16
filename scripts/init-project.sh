@@ -39,6 +39,36 @@ rm -f "$TARGET_DIR/package-lock.json"
 # 2d) Eliminar carpeta de scripts
 rm -rf "$TARGET_DIR/scripts"
 
+# 2e) Ajustar Dockerfile para runtime-only
+DOCKERFILE="$TARGET_DIR/Dockerfile"
+# Extraer solo la etapa production
+sed -n '/^FROM nginx:stable-alpine/,$p' "$DOCKERFILE" > "$DOCKERFILE.tmp"
+mv "$DOCKERFILE.tmp" "$DOCKERFILE"
+
+# 2f) Ajustar workflow para quitar builder
+WORKFLOW="$TARGET_DIR/.github/workflows/deploy.yml"
+# Eliminar sección builder entre su inicio y "Build & Push RUNTIME image"
+sed -i '/#.*builder/,/Build & Push RUNTIME image/{//!d}' "$WORKFLOW"
+
+# 2g) Regenerar README.md mínimo
+rm -f "$TARGET_DIR/README.md"
+cat > "$TARGET_DIR/README.md" << EOF
+# $PROJECT_NAME
+
+Proyecto iniciado desde Proyecto Base Front-End.
+
+## 🚀 Desarrollo
+
+\`\`\`bash
+npm install
+npm run dev
+\`\`\`
+
+## 🐳 Despliegue
+
+La build y despliegue se realiza con GitHub Actions (runtime-only) y Docker/Nginx.
+EOF
+
 # 3) Reemplazar placeholders en resto de ficheros relevantes
 find "$TARGET_DIR" -type f \
   \( \
