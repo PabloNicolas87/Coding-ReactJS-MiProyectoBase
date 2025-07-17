@@ -12,6 +12,8 @@ if [ -z "$PROJECT_NAME" ] || [ -z "$VERSION" ]; then
 fi
 
 TARGET_DIR="/output/$PROJECT_NAME"
+WORKFLOW="$TARGET_DIR/.github/workflows/deploy.yml"
+DOCKERFILE="$TARGET_DIR/Dockerfile"
 
 echo "📦 Creando proyecto: $PROJECT_NAME"
 echo "🔖 Versión: $VERSION"
@@ -32,28 +34,20 @@ rm -rf "$TARGET_DIR/dist" "$TARGET_DIR/node_modules"
 
 # 2c) Reescribir name y version en package.json, eliminar lock viejo
 sed -i -E "s/\"name\": *\"[^\"]+\"/\"name\": \"$PROJECT_NAME\"/" "$TARGET_DIR/package.json"
-sed -i -E "s/\"version\": *\"[^\"]+\"/\"version\": \"$VERSION\"/"    "$TARGET_DIR/package.json"
+sed -i -E "s/\"version\": *\"[^\"]+\"/\"version\": \"$VERSION\"/" "$TARGET_DIR/package.json"
 rm -f "$TARGET_DIR/package-lock.json"
 
 # 2d) Eliminar carpeta de scripts
 rm -rf "$TARGET_DIR/scripts"
 
 # 2e) Ajustar Dockerfile para runtime-only
-DOCKERFILE="$TARGET_DIR/Dockerfile"
-sed -n '/^FROM nginx:stable-alpine/,$p' "$DOCKERFILE" > "$DOCKERFILE.tmp"
+sed -n -e '1,/^FROM nginx:stable-alpine/!d' "$DOCKERFILE" > "$DOCKERFILE.tmp"
 mv "$DOCKERFILE.tmp" "$DOCKERFILE"
 
 # 2f) Ajustar workflow de GitHub Actions
-WORKFLOW="$TARGET_DIR/.github/workflows/deploy.yml"
-
-# 2f1) Eliminar cualquier línea que mencione proyectobase-runtime
-sed -i '/proyectobase-runtime/d' "$WORKFLOW"
-
-# 2f2) Eliminar el paso antiguo de runtime entero (desde su 'name:' hasta antes de 'docker image prune')
-sed -i '/name: .*Push.*RUNTIME image/,/docker image prune -f/d' "$WORKFLOW"
-
-# 2f3) Insertar el nuevo paso runtime justo antes de 'docker image prune -f'
-#    Para ello localizamos la línea 'docker image prune -f' y añadimos encima el bloque:
+#   1) Borrar TODO el bloque de builder + antiguo runtime
+sed -i '/name: 🔨 Build & Push BUILDER image/,/docker image prune -f/d' "$WORKFLOW"
+#   2) Insertar el nuevo bloque runtime justo antes de la limpieza de imágenes
 sed -i '/docker image prune -f/i\
       - name: 🔨 Build & Push '"$PROJECT_NAME"'-runtime image\n\
         run: |\n\
@@ -62,10 +56,6 @@ sed -i '/docker image prune -f/i\
             -t '"$DOCKER_USER"'/'"$PROJECT_NAME"'-runtime:latest .\n\
           docker push '"$DOCKER_USER"'/'"$PROJECT_NAME"'-runtime:${{ env.VERSION }} \\\n\
           docker push '"$DOCKER_USER"'/'"$PROJECT_NAME"'-runtime:latest' "$WORKFLOW"
-
-
-# Limpiar cualquier referencia residual a proyectobase-runtime
-sed -i '/proyectobase-runtime/d' "$WORKFLOW"
 
 # 2g) Regenerar README.md mínimo
 rm -f "$TARGET_DIR/README.md"
@@ -99,7 +89,7 @@ git init
 # Configurar identidad Git
 GIT_NAME="${GIT_USER_NAME:-PabloNicolas87}"
 GIT_EMAIL="${GIT_USER_EMAIL:-gironepablo@gmail.com}"
-echo "✏️ Configurando Git user.name=$GIT_NAME user.email=$GIT_EMAIL"
+echo "✏️  Configurando Git user.name=$GIT_NAME user.email=$GIT_EMAIL"
 git config user.name "$GIT_NAME"
 git config user.email "$GIT_EMAIL"
 
@@ -108,3 +98,4 @@ git commit -m "chore: init $PROJECT_NAME@$VERSION"
 
 echo
 echo "✅ Proyecto '$PROJECT_NAME' creado en $TARGET_DIR"
+echo "🚀 Listo para desarrollo y despliegue."
