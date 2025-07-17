@@ -28,8 +28,7 @@ cp -R /usr/src/base/. "$TARGET_DIR"
 rm -rf "$TARGET_DIR/.git"
 
 # 2b) Limpiar carpetas que no queremos en el scaffold
-rm -rf "$TARGET_DIR/dist"
-rm -rf "$TARGET_DIR/node_modules"
+rm -rf "$TARGET_DIR/dist" "$TARGET_DIR/node_modules"
 
 # 2c) Reescribir name y version en package.json, eliminar lock viejo
 sed -i -E "s/\"name\": *\"[^\"]+\"/\"name\": \"$PROJECT_NAME\"/" "$TARGET_DIR/package.json"
@@ -41,14 +40,19 @@ rm -rf "$TARGET_DIR/scripts"
 
 # 2e) Ajustar Dockerfile para runtime-only
 DOCKERFILE="$TARGET_DIR/Dockerfile"
-# Extraer solo la etapa production
 sed -n '/^FROM nginx:stable-alpine/,$p' "$DOCKERFILE" > "$DOCKERFILE.tmp"
 mv "$DOCKERFILE.tmp" "$DOCKERFILE"
 
-# 2f) Ajustar workflow para quitar builder
+# 2f) Ajustar workflow de GitHub Actions
 WORKFLOW="$TARGET_DIR/.github/workflows/deploy.yml"
-# Eliminar sección builder entre su inicio y "Build & Push RUNTIME image"
-sed -i '/#.*builder/,/Build & Push RUNTIME image/{//!d}' "$WORKFLOW"
+
+#  - Eliminar toda la sección de builder
+sed -i '/name: 🔨 Build & Push BUILDER image/,/name: ⚙️ Build & Push RUNTIME image/{//!d}' "$WORKFLOW"
+
+#  - Renombrar la cabecera de runtime y actualizar comandos Docker
+sed -i "s|name: ⚙️ Build & Push RUNTIME image|name: 🔨 Build & Push ${PROJECT_NAME^^}-runtime image|g" "$WORKFLOW"
+sed -i -E "s|docker build --target production.*|docker build --target production \\\n            -t $DOCKER_USER/${PROJECT_NAME}-runtime:\${{ env.VERSION }} \\\n            -t $DOCKER_USER/${PROJECT_NAME}-runtime:latest .|g" "$WORKFLOW"
+sed -i -E "s|docker push .+|docker push $DOCKER_USER/${PROJECT_NAME}-runtime:\${{ env.VERSION }} \\\n            docker push $DOCKER_USER/${PROJECT_NAME}-runtime:latest|g" "$WORKFLOW"
 
 # 2g) Regenerar README.md mínimo
 rm -f "$TARGET_DIR/README.md"
@@ -66,19 +70,13 @@ npm run dev
 
 ## 🐳 Despliegue
 
-La build y despliegue se realiza con GitHub Actions (runtime-only) y Docker/Nginx.
+Se publica una imagen runtime en Docker Hub y se sirve con Nginx.
 EOF
 
 # 3) Reemplazar placeholders en resto de ficheros relevantes
 find "$TARGET_DIR" -type f \
-  \( \
-    -name "*.yml"  -o \
-    -name "*.md"   -o \
-    -name ".gitignore" -o \
-    -name "Dockerfile" \
-  \) \
-  -exec sed -i \
-    -e "s/__DOCKER_USER__/$DOCKER_USER/g" {} \;
+  \( -name "*.yml" -o -name "*.md" -o -name ".gitignore" -o -name "Dockerfile" \) \
+  -exec sed -i -e "s/__DOCKER_USER__/$DOCKER_USER/g" {} \;
 
 # 4) Inicializar git local
 echo "🔧 Inicializando repositorio Git en $TARGET_DIR"
@@ -97,3 +95,4 @@ git commit -m "chore: init $PROJECT_NAME@$VERSION"
 
 echo
 echo "✅ Proyecto '$PROJECT_NAME' creado en $TARGET_DIR"
+
