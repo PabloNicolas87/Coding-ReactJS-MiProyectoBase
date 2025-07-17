@@ -34,27 +34,68 @@ rm -rf "$TARGET_DIR/scripts"
 sed -n '/^FROM nginx:stable-alpine/,$p' "$DOCKERFILE" > "$DOCKERFILE.tmp"
 mv "$DOCKERFILE.tmp" "$DOCKERFILE"
 
-# 2f) Workflow: quitar builder + corregir login + añadir build/runtime
+# 2f) Regenerar deploy.yml desde cero
+cat > "$WORKFLOW" << EOF
+name: CI/CD – Build & Publish Docker Image
 
-# 1) Eliminar bloque builder
-sed -i '/name: 🔨 Build & Push BUILDER image/,/uses: docker\/login-action@v2/d' "$WORKFLOW"
+on:
+  push:
+    branches: [ main ]
+    tags:
+      - 'v*'
 
-# 2) Insertar el bloque 'with:' y credenciales justo después del login
-sed -i '/uses: docker\/login-action@v2/a\
-        with:\
-          username: ${{ secrets.DOCKERHUB_USERNAME }}\
-          password: ${{ secrets.DOCKERHUB_TOKEN }}' "$WORKFLOW"
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      VERSION: latest
 
-# 3) Insertar el paso de build & push runtime justo después de las credenciales
-sed -i '/password:.*DOCKERHUB_TOKEN/a\
-\
-      - name: 🔨 Build & Push '"$PROJECT_NAME"'-runtime image\
-        run: |\
+    steps:
+      - name: 📥 Checkout repo
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: 🔖 Determine version tag
+        id: version
+        run: |
+          if [[ "\${GITHUB_REF}" == refs/tags/* ]]; then
+            echo "VERSION=\${GITHUB_REF#refs/tags/}" >> \$GITHUB_ENV
+          else
+            echo "VERSION=latest" >> \$GITHUB_ENV
+          fi
+
+      - name: 🛠️ Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+
+      - name: 📦 Install dependencies
+        run: npm ci
+
+      - name: ⚙️ Build project
+        run: npm run build
+
+      - name: 🐳 Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: 🐳 Log in to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: \${{ secrets.DOCKERHUB_USERNAME }}
+          password: \${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: 🔨 Build & Push $PROJECT_NAME-runtime image
+        run: |
           docker build --target production \\
-            -t '"$DOCKER_USER"'/'"$PROJECT_NAME"'-runtime:${{ env.VERSION }} \\
-            -t '"$DOCKER_USER"'/'"$PROJECT_NAME"'-runtime:latest .\
-          docker push '"$DOCKER_USER"'/'"$PROJECT_NAME"'-runtime:${{ env.VERSION }} \\
-          docker push '"$DOCKER_USER"'/'"$PROJECT_NAME"'-runtime:latest' "$WORKFLOW"
+            -t $DOCKER_USER/$PROJECT_NAME-runtime:\${{ env.VERSION }} \\
+            -t $DOCKER_USER/$PROJECT_NAME-runtime:latest .
+          docker push $DOCKER_USER/$PROJECT_NAME-runtime:\${{ env.VERSION }} \\
+          docker push $DOCKER_USER/$PROJECT_NAME-runtime:latest
+
+      - name: 🧹 Clean up dangling images
+        run: docker image prune -f
+EOF
 
 # 2g) Regenerar README.md mínimo
 rm -f "$TARGET_DIR/README.md"
@@ -91,4 +132,5 @@ git add .
 git commit -m "chore: init $PROJECT_NAME@$VERSION"
 
 echo "✅ Proyecto '$PROJECT_NAME' creado en $TARGET_DIR"
+
 
