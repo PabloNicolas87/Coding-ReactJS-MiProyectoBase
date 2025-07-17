@@ -33,7 +33,13 @@ rm -rf "$TARGET_DIR/scripts"
 sed -n '/^FROM nginx:stable-alpine/,$p' "$DOCKERFILE" > "$DOCKERFILE.tmp"
 mv "$DOCKERFILE.tmp" "$DOCKERFILE"
 
-# 2f) Workflow: limpiar builder y añadir build-runtime tras el login
+ # 2f) Workflow: limpiar builder y añadir build-runtime tras el login
+
+-#  - Asegurar que el 'with:' pertenece al login (indentado)
+-sed -i '/uses: docker\/login-action@v2/,/with:/!b;n; s/^/        /' "$WORKFLOW"
++#  - Corregir indentación del bloque de login
++sed -i '/uses: docker\/login-action@v2/ {n; s/^/        /}; /^ *with:/ s/^/        /; /^ *username:/ s/^/          /; /^ *password:/ s/^/          /' "$WORKFLOW"
+
 
 #  - Eliminar cualquier bloque builder antiguo
 sed -i '/name: 🔨 Build & Push BUILDER image/,/uses: docker\/login-action@v2/d' "$WORKFLOW"
