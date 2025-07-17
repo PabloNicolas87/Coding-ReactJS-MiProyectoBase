@@ -46,26 +46,23 @@ mv "$DOCKERFILE.tmp" "$DOCKERFILE"
 # 2f) Ajustar workflow de GitHub Actions
 WORKFLOW="$TARGET_DIR/.github/workflows/deploy.yml"
 
-# Eliminar la sección completa de builder
-sed -i '/name: 🔨 Build & Push BUILDER image/,/name: ⚙️ Build & Push RUNTIME image/d' "$WORKFLOW"
+# 2f1) Eliminar cualquier línea que mencione proyectobase-runtime
+sed -i '/proyectobase-runtime/d' "$WORKFLOW"
 
-# Renombrar el paso de runtime y dejar sólo líneas correctas
-# 1) Cambiar el título del paso
-sed -i "s|name: ⚙️ Build & Push RUNTIME image|name: 🔨 Build & Push $PROJECT_NAME-runtime image|g" "$WORKFLOW"
+# 2f2) Eliminar el paso antiguo de runtime entero (desde su 'name:' hasta antes de 'docker image prune')
+sed -i '/name: .*Push.*RUNTIME image/,/docker image prune -f/d' "$WORKFLOW"
 
-# 2) Reemplazar el bloque run de ese paso con el snippet limpio
-#    Eliminamos líneas antiguas del run
-sed -i '/name: 🔨 Build & Push '"$PROJECT_NAME"'-runtime image/,/docker image prune -f/{
-  /run:/!d
-}' "$WORKFLOW"
-#    Insertamos el bloque correcto justo después de la línea 'run: |'
-sed -i "/name: 🔨 Build & Push $PROJECT_NAME-runtime image/a\\
-        run: |\\
+# 2f3) Insertar el nuevo paso runtime justo antes de 'docker image prune -f'
+#    Para ello localizamos la línea 'docker image prune -f' y añadimos encima el bloque:
+sed -i '/docker image prune -f/i\
+      - name: 🔨 Build & Push '"$PROJECT_NAME"'-runtime image\n\
+        run: |\n\
           docker build --target production \\\n\
-            -t $DOCKER_USER/$PROJECT_NAME-runtime:\${{ env.VERSION }} \\\n\
-            -t $DOCKER_USER/$PROJECT_NAME-runtime:latest .\\
-          docker push $DOCKER_USER/$PROJECT_NAME-runtime:\${{ env.VERSION }} \\\n\
-          docker push $DOCKER_USER/$PROJECT_NAME-runtime:latest" "$WORKFLOW"
+            -t '"$DOCKER_USER"'/'"$PROJECT_NAME"'-runtime:${{ env.VERSION }} \\\n\
+            -t '"$DOCKER_USER"'/'"$PROJECT_NAME"'-runtime:latest .\n\
+          docker push '"$DOCKER_USER"'/'"$PROJECT_NAME"'-runtime:${{ env.VERSION }} \\\n\
+          docker push '"$DOCKER_USER"'/'"$PROJECT_NAME"'-runtime:latest' "$WORKFLOW"
+
 
 # Limpiar cualquier referencia residual a proyectobase-runtime
 sed -i '/proyectobase-runtime/d' "$WORKFLOW"
