@@ -35,7 +35,7 @@ mv "$DOCKERFILE.tmp" "$DOCKERFILE"
 
  # 2f) Workflow: limpiar builder y añadir build-runtime tras el login
 
--#  - Asegurar que el 'with:' pertenece al login (indentado)
+-#  - Asegurar que el 'with:' pertenece al login
 -sed -i '/uses: docker\/login-action@v2/,/with:/!b;n; s/^/        /' "$WORKFLOW"
 +#  - Corregir indentación del bloque de login
 +sed -i '/uses: docker\/login-action@v2/ {n; s/^/        /}; /^ *with:/ s/^/        /; /^ *username:/ s/^/          /; /^ *password:/ s/^/          /' "$WORKFLOW"
