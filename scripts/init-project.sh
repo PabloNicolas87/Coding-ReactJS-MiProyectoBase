@@ -46,11 +46,13 @@ mv "$DOCKERFILE.tmp" "$DOCKERFILE"
 # 2f) Ajustar workflow de GitHub Actions
 WORKFLOW="$TARGET_DIR/.github/workflows/deploy.yml"
 
-#  - Eliminar toda la sección de builder
+#  - Eliminar sección de builder
 sed -i '/name: 🔨 Build & Push BUILDER image/,/name: ⚙️ Build & Push RUNTIME image/{//!d}' "$WORKFLOW"
 
-#  - Renombrar la cabecera de runtime y actualizar comandos Docker
-sed -i "s|name: ⚙️ Build & Push RUNTIME image|name: 🔨 Build & Push ${PROJECT_NAME^^}-runtime image|g" "$WORKFLOW"
+#  - Renombrar la cabecera de runtime
+sed -i "s|name: ⚙️ Build & Push RUNTIME image|name: 🔨 Build & Push ${PROJECT_NAME}-runtime image|g" "$WORKFLOW"
+
+#  - Actualizar comandos Docker para runtime
 sed -i -E "s|docker build --target production.*|docker build --target production \\\n            -t $DOCKER_USER/${PROJECT_NAME}-runtime:\${{ env.VERSION }} \\\n            -t $DOCKER_USER/${PROJECT_NAME}-runtime:latest .|g" "$WORKFLOW"
 sed -i -E "s|docker push .+|docker push $DOCKER_USER/${PROJECT_NAME}-runtime:\${{ env.VERSION }} \\\n            docker push $DOCKER_USER/${PROJECT_NAME}-runtime:latest|g" "$WORKFLOW"
 
@@ -95,4 +97,3 @@ git commit -m "chore: init $PROJECT_NAME@$VERSION"
 
 echo
 echo "✅ Proyecto '$PROJECT_NAME' creado en $TARGET_DIR"
-
