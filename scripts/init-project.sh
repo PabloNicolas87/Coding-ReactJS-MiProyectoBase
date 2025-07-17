@@ -48,17 +48,20 @@ WORKFLOW="$TARGET_DIR/.github/workflows/deploy.yml"
 
 #  - Eliminar sección builder
 sed -i '/name: 🔨 Build & Push BUILDER image/,/name: ⚙️ Build & Push RUNTIME image/{//!d}' "$WORKFLOW"
+
 #  - Renombrar la cabecera runtime
 UPPER_NAME=$(printf '%s' "$PROJECT_NAME" | tr '[:lower:]' '[:upper:]')
 sed -i "s|name: ⚙️ Build & Push RUNTIME image|name: 🔨 Build & Push ${UPPER_NAME}-RUNTIME image|g" "$WORKFLOW"
+
 #  - Actualizar comandos Docker para runtime con saltos reales
 sed -i '/docker build --target production/ c\
-    docker build --target production \\
-      -t '"$DOCKER_USER"'/'"$PROJECT_NAME"'-runtime:${{ env.VERSION }} \\
-      -t '"$DOCKER_USER"'/'"$PROJECT_NAME"'-runtime:latest .' "$WORKFLOW"
+docker build --target production \
+  -t '"$DOCKER_USER"'/'"$PROJECT_NAME"'-runtime:${{ env.VERSION }} \
+  -t '"$DOCKER_USER"'/'"$PROJECT_NAME"'-runtime:latest .' "$WORKFLOW"
+
 sed -i '/docker push/ c\
-    docker push '"$DOCKER_USER"'/'"$PROJECT_NAME"'-runtime:${{ env.VERSION }} \\
-    docker push '"$DOCKER_USER"'/'"$PROJECT_NAME"'-runtime:latest' "$WORKFLOW"
+docker push '"$DOCKER_USER"'/'"$PROJECT_NAME"'-runtime:${{ env.VERSION }} \
+docker push '"$DOCKER_USER"'/'"$PROJECT_NAME"'-runtime:latest' "$WORKFLOW"
 
 # 2g) Regenerar README.md mínimo
 rm -f "$TARGET_DIR/README.md"
