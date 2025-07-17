@@ -33,21 +33,15 @@ rm -rf "$TARGET_DIR/scripts"
 sed -n '/^FROM nginx:stable-alpine/,$p' "$DOCKERFILE" > "$DOCKERFILE.tmp"
 mv "$DOCKERFILE.tmp" "$DOCKERFILE"
 
- # 2f) Workflow: limpiar builder y añadir build-runtime tras el login
+# 2f) Workflow: limpiar builder y añadir build-runtime tras el login
 
--#  - Asegurar que el 'with:' pertenece al login
--sed -i '/uses: docker\/login-action@v2/,/with:/!b;n; s/^/        /' "$WORKFLOW"
-+#  - Corregir indentación del bloque de login
-+sed -i '/uses: docker\/login-action@v2/ {n; s/^/        /}; /^ *with:/ s/^/        /; /^ *username:/ s/^/          /; /^ *password:/ s/^/          /' "$WORKFLOW"
+#   Corregir indentación del bloque de login
+sed -i '/uses: docker\/login-action@v2/ {n; s/^/        /}; /^ *with:/ s/^/        /; /^ *username:/ s/^/          /; /^ *password:/ s/^/          /' "$WORKFLOW"
 
-
-#  - Eliminar cualquier bloque builder antiguo
+#   Eliminar cualquier bloque builder antiguo
 sed -i '/name: 🔨 Build & Push BUILDER image/,/uses: docker\/login-action@v2/d' "$WORKFLOW"
 
-#  - Asegurar que el 'with:' pertenece al login (indentado)
-sed -i '/uses: docker\/login-action@v2/,/with:/!b;n; s/^/        /' "$WORKFLOW"
-
-#  - Insertar el paso de build & push runtime justo después del login's with
+#   Insertar el paso de build & push runtime justo después del login's with
 sed -i '/password:.*DOCKERHUB_TOKEN/ a\
       - name: 🔨 Build & Push '"$PROJECT_NAME"'-runtime image\n\
         run: |\n\
@@ -56,6 +50,7 @@ sed -i '/password:.*DOCKERHUB_TOKEN/ a\
             -t '"$DOCKER_USER"'/'"$PROJECT_NAME"'-runtime:latest .\n\
           docker push '"$DOCKER_USER"'/'"$PROJECT_NAME"'-runtime:${{ env.VERSION }} \\\n\
           docker push '"$DOCKER_USER"'/'"$PROJECT_NAME"'-runtime:latest' "$WORKFLOW"
+
 
 # 2g) Regenerar README.md mínimo
 rm -f "$TARGET_DIR/README.md"
