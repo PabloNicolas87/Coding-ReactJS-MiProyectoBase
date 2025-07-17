@@ -46,22 +46,29 @@ mv "$DOCKERFILE.tmp" "$DOCKERFILE"
 # 2f) Ajustar workflow de GitHub Actions
 WORKFLOW="$TARGET_DIR/.github/workflows/deploy.yml"
 
-#  - Eliminar sección builder
-sed -i '/name: 🔨 Build & Push BUILDER image/,/name: ⚙️ Build & Push RUNTIME image/{//!d}' "$WORKFLOW"
+# Eliminar la sección completa de builder
+sed -i '/name: 🔨 Build & Push BUILDER image/,/name: ⚙️ Build & Push RUNTIME image/d' "$WORKFLOW"
 
-#  - Renombrar la cabecera runtime
-UPPER_NAME=$(printf '%s' "$PROJECT_NAME" | tr '[:lower:]' '[:upper:]')
-sed -i "s|name: ⚙️ Build & Push RUNTIME image|name: 🔨 Build & Push ${UPPER_NAME}-RUNTIME image|g" "$WORKFLOW"
+# Renombrar el paso de runtime y dejar sólo líneas correctas
+# 1) Cambiar el título del paso
+sed -i "s|name: ⚙️ Build & Push RUNTIME image|name: 🔨 Build & Push $PROJECT_NAME-runtime image|g" "$WORKFLOW"
 
-#  - Actualizar comandos Docker para runtime con saltos reales
-sed -i '/docker build --target production/ c\
-docker build --target production \
-  -t '"$DOCKER_USER"'/'"$PROJECT_NAME"'-runtime:${{ env.VERSION }} \
-  -t '"$DOCKER_USER"'/'"$PROJECT_NAME"'-runtime:latest .' "$WORKFLOW"
+# 2) Reemplazar el bloque run de ese paso con el snippet limpio
+#    Eliminamos líneas antiguas del run
+sed -i '/name: 🔨 Build & Push '"$PROJECT_NAME"'-runtime image/,/docker image prune -f/{
+  /run:/!d
+}' "$WORKFLOW"
+#    Insertamos el bloque correcto justo después de la línea 'run: |'
+sed -i "/name: 🔨 Build & Push $PROJECT_NAME-runtime image/a\\
+        run: |\\
+          docker build --target production \\\n\
+            -t $DOCKER_USER/$PROJECT_NAME-runtime:\${{ env.VERSION }} \\\n\
+            -t $DOCKER_USER/$PROJECT_NAME-runtime:latest .\\
+          docker push $DOCKER_USER/$PROJECT_NAME-runtime:\${{ env.VERSION }} \\\n\
+          docker push $DOCKER_USER/$PROJECT_NAME-runtime:latest" "$WORKFLOW"
 
-sed -i '/docker push/ c\
-docker push '"$DOCKER_USER"'/'"$PROJECT_NAME"'-runtime:${{ env.VERSION }} \
-docker push '"$DOCKER_USER"'/'"$PROJECT_NAME"'-runtime:latest' "$WORKFLOW"
+# Limpiar cualquier referencia residual a proyectobase-runtime
+sed -i '/proyectobase-runtime/d' "$WORKFLOW"
 
 # 2g) Regenerar README.md mínimo
 rm -f "$TARGET_DIR/README.md"
@@ -95,7 +102,7 @@ git init
 # Configurar identidad Git
 GIT_NAME="${GIT_USER_NAME:-PabloNicolas87}"
 GIT_EMAIL="${GIT_USER_EMAIL:-gironepablo@gmail.com}"
-echo "✏️  Configurando Git user.name=$GIT_NAME user.email=$GIT_EMAIL"
+echo "✏️ Configurando Git user.name=$GIT_NAME user.email=$GIT_EMAIL"
 git config user.name "$GIT_NAME"
 git config user.email "$GIT_EMAIL"
 
