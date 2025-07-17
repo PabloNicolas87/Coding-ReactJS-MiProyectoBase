@@ -43,7 +43,13 @@ sed -i '/uses: docker\/login-action@v2/,/with:/!b;n; s/^/        /' "$WORKFLOW"
 
 #  - Insertar el paso de build & push runtime justo después del login's with
 sed -i '/password:.*DOCKERHUB_TOKEN/ a\
-      \n      - name: 🔨 Build & Push '"$PROJECT_NAME"'-runtime image\n      run: |\n        docker build --target production \\\n          -t '"$DOCKER_USER"'/'"$PROJECT_NAME"'-runtime:${{ env.VERSION }} \\\n          -t '"$DOCKER_USER"'/'"$PROJECT_NAME"'-runtime:latest .\n        docker push '"$DOCKER_USER"'/'"$PROJECT_NAME"'-runtime:${{ env.VERSION }} \\\n        docker push '"$DOCKER_USER"'/'"$PROJECT_NAME"'-runtime:latest' "$WORKFLOW"
+      - name: 🔨 Build & Push '"$PROJECT_NAME"'-runtime image\n\
+        run: |\n\
+          docker build --target production \\\n\
+            -t '"$DOCKER_USER"'/'"$PROJECT_NAME"'-runtime:${{ env.VERSION }} \\\n\
+            -t '"$DOCKER_USER"'/'"$PROJECT_NAME"'-runtime:latest .\n\
+          docker push '"$DOCKER_USER"'/'"$PROJECT_NAME"'-runtime:${{ env.VERSION }} \\\n\
+          docker push '"$DOCKER_USER"'/'"$PROJECT_NAME"'-runtime:latest' "$WORKFLOW"
 
 # 2g) Regenerar README.md mínimo
 rm -f "$TARGET_DIR/README.md"
@@ -80,4 +86,3 @@ git add .
 git commit -m "chore: init $PROJECT_NAME@$VERSION"
 
 echo "✅ Proyecto '$PROJECT_NAME' creado en $TARGET_DIR"
-
