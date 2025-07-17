@@ -36,24 +36,24 @@ mv "$DOCKERFILE.tmp" "$DOCKERFILE"
 
 # 2f) Workflow: quitar builder + corregir login + añadir build/runtime
 
-# Eliminar bloque builder
+# 1) Eliminar bloque builder
 sed -i '/name: 🔨 Build & Push BUILDER image/,/uses: docker\/login-action@v2/d' "$WORKFLOW"
 
-# Insertar 'with:' justo después del login-action line
+# 2) Insertar el bloque 'with:' y credenciales justo después del login
 sed -i '/uses: docker\/login-action@v2/a\
         with:\
           username: ${{ secrets.DOCKERHUB_USERNAME }}\
           password: ${{ secrets.DOCKERHUB_TOKEN }}' "$WORKFLOW"
 
-# Insertar paso runtime justo después de las credenciales
+# 3) Insertar el paso de build & push runtime justo después de las credenciales
 sed -i '/password:.*DOCKERHUB_TOKEN/a\
 \
       - name: 🔨 Build & Push '"$PROJECT_NAME"'-runtime image\
         run: |\
-          docker build --target production \\ 
-            -t '"$DOCKER_USER"'/'"$PROJECT_NAME"'-runtime:${{ env.VERSION }} \\ 
+          docker build --target production \\
+            -t '"$DOCKER_USER"'/'"$PROJECT_NAME"'-runtime:${{ env.VERSION }} \\
             -t '"$DOCKER_USER"'/'"$PROJECT_NAME"'-runtime:latest .\
-          docker push '"$DOCKER_USER"'/'"$PROJECT_NAME"'-runtime:${{ env.VERSION }} \\ 
+          docker push '"$DOCKER_USER"'/'"$PROJECT_NAME"'-runtime:${{ env.VERSION }} \\
           docker push '"$DOCKER_USER"'/'"$PROJECT_NAME"'-runtime:latest' "$WORKFLOW"
 
 # 2g) Regenerar README.md mínimo
