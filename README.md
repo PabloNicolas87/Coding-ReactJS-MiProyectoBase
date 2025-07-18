@@ -150,7 +150,7 @@ Si prefieres no clonar el repositorio como template, sigue estos **5 pasos** par
 4. **Adaptar CI/CD y GitHub Actions**
 
    * Copia o ajusta `.github/workflows/deploy.yml`, cambiando etiquetas y rutas al nuevo repo e imagen.
-   * Configura los **secrets** (`DOCKERHUB_USER`, `DOCKERHUB_TOKEN`) en el repo de proyecto-nuevo.
+   * Configura los **secrets** (`DOCKERHUB_USERNAME`, `DOCKERHUB_TOKEN`) en el repo de proyecto-nuevo. El nombre de usuario para Docker Hub se toma de `DOCKERHUB_USERNAME`.
 5. **Configurar despliegue de imágenes Docker**
 
    ```dockerfile
