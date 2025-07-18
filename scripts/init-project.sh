@@ -1,13 +1,14 @@
 #!/usr/bin/env sh
 set -e
 
-# Parámetros
+# Parámetros obligatorios
 PROJECT_NAME="$1"
 VERSION="$2"
-DOCKER_USER="${3:-pablonicolas87}"
+DOCKER_USER="$3"
 
-if [ -z "$PROJECT_NAME" ] || [ -z "$VERSION" ]; then
-  echo "Uso: init-project.sh <project-name> <version> [docker-user]"
+# Validación estricta: ahora Docker user es obligatorio
+if [ -z "$PROJECT_NAME" ] || [ -z "$VERSION" ] || [ -z "$DOCKER_USER" ]; then
+  echo "Uso: init-project.sh <project-name> <version> <docker-user>"
   exit 1
 fi
 
@@ -16,10 +17,10 @@ WORKFLOW="$TARGET_DIR/.github/workflows/deploy.yml"
 DOCKERFILE="$TARGET_DIR/Dockerfile"
 
 echo
-echo "📦 Creando proyecto: $PROJECT_NAME"
-echo "🔖 Versión: $VERSION"
-echo "🐳 Docker user: $DOCKER_USER"
-echo
+ echo "📦 Creando proyecto: $PROJECT_NAME"
+ echo "🔖 Versión: $VERSION"
+ echo "🐳 Docker user: $DOCKER_USER"
+ echo
 
 # 1) Scaffold básico...
 mkdir -p "$TARGET_DIR"
@@ -106,10 +107,10 @@ Proyecto iniciado desde Proyecto Base Front-End.
 
 ## 🚀 Desarrollo
 
-\`\`\`bash
+```bash
 npm install
 npm run dev
-\`\`\`
+```
 
 ## 🐳 Despliegue
 
@@ -119,7 +120,8 @@ EOF
 # 3) Reemplazar placeholders
 find "$TARGET_DIR" -type f \
   \( -name "*.yml" -o -name "*.md" -o -name ".gitignore" -o -name "Dockerfile" \) \
-  -exec sed -i "s/__DOCKER_USER__/$DOCKER_USER/g" {} \;
+  -exec sed -i "s/__DOCKER_USER__/$DOCKER_USER/g" {} \
+;
 
 # 4) Git init + commit
 cd "$TARGET_DIR"
@@ -132,5 +134,3 @@ git add .
 git commit -m "chore: init $PROJECT_NAME@$VERSION"
 
 echo "✅ Proyecto '$PROJECT_NAME' creado en $TARGET_DIR"
-
-
