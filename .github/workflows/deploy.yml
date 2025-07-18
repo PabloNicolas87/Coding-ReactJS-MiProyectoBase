@@ -12,6 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       VERSION: latest
+      DOCKER_USER: ${{ secrets.DOCKERHUB_USERNAME }}
 
     steps:
       - name: 📥 Checkout repo
@@ -51,18 +52,18 @@ jobs:
       - name: 🔨 Build & Push BUILDER image
         run: |
           docker build --target builder \
-            -t pablonicolas87/proyectobase-builder:${{ env.VERSION }} \
-            -t pablonicolas87/proyectobase-builder:latest .
-          docker push pablonicolas87/proyectobase-builder:${{ env.VERSION }}
-          docker push pablonicolas87/proyectobase-builder:latest
+            -t ${DOCKER_USER}/proyectobase-builder:${{ env.VERSION }} \
+            -t ${DOCKER_USER}/proyectobase-builder:latest .
+          docker push ${DOCKER_USER}/proyectobase-builder:${{ env.VERSION }}
+          docker push ${DOCKER_USER}/proyectobase-builder:latest
 
       - name: ⚙️ Build & Push RUNTIME image
         run: |
           docker build --target production \
-            -t pablonicolas87/proyectobase-runtime:${{ env.VERSION }} \
-            -t pablonicolas87/proyectobase-runtime:latest .
-          docker push pablonicolas87/proyectobase-runtime:${{ env.VERSION }}
-          docker push pablonicolas87/proyectobase-runtime:latest
+            -t ${DOCKER_USER}/proyectobase-runtime:${{ env.VERSION }} \
+            -t ${DOCKER_USER}/proyectobase-runtime:latest .
+          docker push ${DOCKER_USER}/proyectobase-runtime:${{ env.VERSION }}
+          docker push ${DOCKER_USER}/proyectobase-runtime:latest
 
       - name: 🧹 Clean up dangling images
         run: docker image prune -f
